@@ -18,9 +18,9 @@ Three physical devices: two sensor nodes (leaf, relay) and one gateway.
 
 ```mermaid
 flowchart LR
-    A["Node A — Leaf<br/>sensors · deep sleep"] -- ESP-NOW --> B["Node B — Relay<br/>sensors · aggregation · deep sleep"]
+    A["Node A — Leaf<br/>sensors · deep sleep"] -- ESP-NOW --> B["Node B — Relay<br/>sensors · forwarding · deep sleep"]
     B -- ESP-NOW --> G["Gateway<br/>always-on"]
-    G -- USB serial / JSON --> PC["PC<br/>Python log parser"]
+    G -- USB serial --> PC["PC<br/>serial log"]
 ```
 
 ## Key features
@@ -30,8 +30,8 @@ flowchart LR
 | Time synchronization | Cristian's algorithm + EWMA smoothing (α = 0.2); no external RTC |
 | Setup phase | Handshake to align nodes at first power-on |
 | Adaptive TX power | RSSI-driven, 11.0–19.5 dBm, ±5 dB hysteresis |
-| In-network aggregation | Relay merges its own and the leaf's readings into one packet |
-| Self-healing | Failure counter persisted in RTC memory across deep sleep; skip-route after 3 failures |
+| In-network aggregation | Weighted-average merge implemented (`relay_aggregate()`), **not enabled** in the tested firmware — relay currently forwards the leaf's packet |
+| Self-healing | Failure counter persisted in RTC memory across deep sleep; skip-route after 3 failures. Compile-time option, **off by default** (`ENABLE_SELF_HEALING`) |
 | Sensor power gating | P-MOSFET switches analog sensors off during sleep |
 | FEC | 5 bytes reserved in packet; Hamming(72,64) **not implemented** (Phase 2) |
 
@@ -40,11 +40,11 @@ flowchart LR
 | Item | Detail |
 |---|---|
 | MCU | ESP32-C6 Super Mini (RISC-V, 160 MHz) — all three devices |
-| Sensors (V2) | DS18B20 (temperature), BMP280 (pressure/temperature), SW-520D (tilt) |
-| Sensors (V1) | DHT22, resistive soil moisture |
+| Sensors (V2) | DS18B20 (soil temperature), BMP180 (pressure/temperature), SW-520D (tilt) <!-- TODO: paper says BMP280, code has a BMP180 driver — confirm the actual part --> |
+| Sensors (V1) | DHT22, capacitive soil moisture |
 | Power (Phase 1) | USB-powered during all tests — **no battery yet** |
 | Power (Phase 2) | Single-cell lithium battery + voltage-divider monitoring (planned) |
-| Gateway link | USB serial, 115200 baud, JSON lines |
+| Gateway link | USB serial, 115200 baud, compact CSV lines (`D:<id>,<soil>,<temp>,...`). Wi-Fi radio runs in STA mode only because ESP-NOW requires it — no Wi-Fi association, no MQTT |
 
 <!-- TODO: add prototype photo → docs/hardware/prototype.jpg -->
 
@@ -74,11 +74,15 @@ On ESP32-C6 (ESP-IDF v5.3.2), ADC readings became invalid when taken after `esp_
 - Indoor tests only, short distances
 - USB-powered: no battery drain or lifetime data yet
 - Self-healing and setup timing verified in logic, not physically fault-injected
-- One BMP280 unit gave invalid readings due to a weak I²C pull-up
+- One pressure-sensor unit gave invalid readings due to a weak I²C pull-up
+- In-network aggregation implemented but not wired into the main loop
+- Python tools in `tools/` still parse an older `DATA:{json}` gateway format; the web dashboard is a UI prototype with sample data
 - FEC reserved but not implemented
 
 ## Roadmap — Phase 2
 
+- [ ] Enable and test in-network aggregation
+- [ ] Update `tools/` parsers to the current gateway output format
 - [ ] Battery integration and battery-voltage monitoring
 - [ ] Power profiling with a proper current meter (baseline vs. TPC / aggregation / sleep)
 - [ ] Measured battery lifetime estimate
@@ -88,25 +92,31 @@ On ESP32-C6 (ESP-IDF v5.3.2), ADC readings became invalid when taken after `esp_
 
 ## Repository layout
 
-<!-- TODO: fill after clean code import -->
 ```
-components/ag_common/   shared packet definitions
-node/                   leaf + relay firmware (same binary, NODE_ID selects role)
-gateway/                gateway firmware (serial output)
-tools/                  Python log parser
-docs/                   paper, measurement data, hardware
+components/ag_common/   shared packet definitions (SensorPacket, PingPacket, AckPacket)
+node/                   leaf + relay firmware — same binary, NODE_ID selects role
+  main/sensors/         DHT22, soil moisture, battery, BMP, DS18B20, tilt (real/mock)
+  main/comm/            ESP-NOW manager, Cristian's sync
+  main/network/         neighbor table, TPC, relay + self-healing
+  main/power/           sleep manager, brownout
+  main/utils/           RTC-memory state across deep sleep
+gateway/                gateway firmware (serial output, watchdog reboot)
+tools/                  serial listeners + Flask/SocketIO bridge + React dashboard prototype
 ```
 
 ## Build
 
 Requires ESP-IDF v5.3.2.
 
-```bash
-cd gateway && idf.py set-target esp32c6 && idf.py build flash monitor
-cd node    && idf.py set-target esp32c6 && idf.py build flash monitor   # set NODE_ID in node_config.h
-```
-
-<!-- TODO: power-on order + MAC table steps from old README (corrected for serial gateway) -->
+1. **Flash every board once and note its MAC** from the boot log (gateway prints its own MAC at boot).
+   ```bash
+   cd gateway && idf.py set-target esp32c6 && idf.py build flash monitor
+   cd node    && idf.py set-target esp32c6 && idf.py build flash monitor
+   ```
+2. **Fill in the MAC table** in `node/main/config/node_config.h` and set `NODE_ID` (`1` = leaf A, `2` = relay B). Re-flash both nodes.
+3. **Sensors:** `USE_REAL_SENSORS` selects real vs. mock sensor readings; `USE_REAL_BATTERY` is `0` in Phase 1 (no battery). Pin map: `node/main/config/pin_config.h`.
+4. **Power-on order:** gateway → Node B → Node A (~2 s later). A and B run a READY/SLEEP handshake on first boot, then follow a 15 s cycle.
+5. **Read data** from the gateway serial port at 115200 baud (`idf.py monitor` or any serial terminal).
 
 ## Paper
 
@@ -117,7 +127,7 @@ cd node    && idf.py set-target esp32c6 && idf.py build flash monitor   # set NO
 
 ### Türkçe özet
 
-ESP32-C6 ve ESP-NOW üzerinde, düşük güç tüketimi için tasarlanmış doğrusal çok-atlamalı bir tarım sensör ağı (iki sensör düğümü + ağ geçidi). Düğümler ortak bir zaman çizelgesiyle uyanıyor; veriler aracı düğümde birleştirilip ağ geçidine iletiliyor. Faz 1'de (iç mekân, USB beslemeli) %99,6 paket iletim oranı ve ±2,6 ms saat senkronizasyonu ölçüldü. Enerji kazanımları hesaplanmış olup ölçülmemiştir; pil entegrasyonu ve güç ölçümleri Faz 2'nin konusudur.
+ESP32-C6 ve ESP-NOW üzerinde, düşük güç tüketimi için tasarlanmış doğrusal çok-atlamalı bir tarım sensör ağı (iki sensör düğümü + ağ geçidi). Düğümler ortak bir zaman çizelgesiyle uyanıyor; veriler aracı düğüm üzerinden ağ geçidine iletiliyor. Faz 1'de (iç mekân, USB beslemeli) %99,6 paket iletim oranı ve ±2,6 ms saat senkronizasyonu ölçüldü. Enerji kazanımları hesaplanmış olup ölçülmemiştir; pil entegrasyonu ve güç ölçümleri Faz 2'nin konusudur.
 
 ## License
 
