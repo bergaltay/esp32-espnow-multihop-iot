@@ -1,0 +1,37 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "sensors/battery.c"
+        "sensors/dht22.c"
+        "sensors/soil_moisture.c"
+        "sensors/bmp180.c"
+        "sensors/ds18b20.c"
+        "sensors/sw520d.c"
+        "comm/espnow_manager.c"
+        "comm/sync.c"
+        "comm/setup.c"
+        "network/neighbor_table.c"
+        "network/tpc.c"
+        "network/relay.c"
+        "power/sleep_manager.c"
+        "power/brownout.c"
+        "utils/rtc_store.c"
+    INCLUDE_DIRS
+        "."
+        "config"
+        "sensors"
+        "comm"
+        "network"
+        "power"
+        "utils"
+    REQUIRES
+        ag_common
+        esp_wifi
+        nvs_flash
+        driver
+        esp_driver_i2c
+        esp_timer
+        esp_adc
+        freertos
+        log
+)

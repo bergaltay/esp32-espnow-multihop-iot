@@ -1,0 +1,15 @@
+/.DS_Store
+/.claude
+/.vscode
+node/build/
+gateway/build/
+/sensor_tester
+
+# Build artifacts and generated files
+build/
+managed_components/
+sdkconfig.old
+.DS_Store
+__pycache__/
+*.pyc
+.idea/

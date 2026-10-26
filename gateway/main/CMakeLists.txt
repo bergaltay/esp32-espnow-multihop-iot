@@ -1,0 +1,14 @@
+idf_component_register(
+    SRCS
+        "main.c"
+    INCLUDE_DIRS
+        "."
+        "config"
+    REQUIRES
+        ag_common
+        esp_wifi
+        nvs_flash
+        esp_timer
+        freertos
+        log
+)
