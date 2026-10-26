@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>Smart Agriculture IoT — Dashboard</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  :root {
+    --bg-main: #F5F0E8;
+    --bg-card: #FDFAF4;
+    --accent-green: #5C8A3C;
+    --accent-green-soft: #EAF1E0;
+    --accent-brown: #8B6F47;
+    --accent-brown-soft: #F1EADD;
+    --text-primary: #2C2417;
+    --text-secondary: #7A6A52;
+    --alert-tint: #FFEDED;
+    --alert-accent: #C0392B;
+    --border: #E8E0D0;
+    --shadow-card: 0 2px 16px rgba(92, 138, 60, 0.08);
+    --shadow-card-lg: 0 4px 24px rgba(92, 138, 60, 0.10);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body { min-width: 1280px; }
+  #root { width: 100%; }
+
+  /* utility */
+  .uppercase-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .card-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+  /* pulse */
+  @keyframes liveDot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(92, 138, 60, 0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(92, 138, 60, 0); }
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-green);
+    animation: liveDot 1.6s ease-in-out infinite;
+  }
+  .live-dot.off { background: #B8AC95; animation: none; }
+
+  /* flowing light along path */
+  @keyframes flowAlong {
+    0% { offset-distance: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { offset-distance: 100%; opacity: 0; }
+  }
+
+  /* event log scroll */
+  .event-log { max-height: 220px; overflow-y: auto; }
+  .event-log::-webkit-scrollbar { width: 6px; }
+  .event-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* sparkline grid lines via recharts inherits color */
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Recharts (depends on prop-types) -->
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+<!-- Framer Motion -->
+<script src="https://unpkg.com/framer-motion@11.3.19/dist/framer-motion.js"></script>
+
+<!-- Lucide (vanilla SVG factory) -->
+<script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="App.jsx"></script>
+</body>
+</html>
