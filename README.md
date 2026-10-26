@@ -40,7 +40,7 @@ flowchart LR
 | Item | Detail |
 |---|---|
 | MCU | ESP32-C6 Super Mini (RISC-V, 160 MHz) — all three devices |
-| Sensors (V2) | DS18B20 (soil temperature), BMP180 (pressure/temperature), SW-520D (tilt) <!-- TODO: paper says BMP280, code has a BMP180 driver — confirm the actual part --> |
+| Sensors (V2) | DS18B20 (soil temperature), BMP180 (pressure/temperature), SW-520D (tilt) |
 | Sensors (V1) | DHT22, capacitive soil moisture |
 | Power (Phase 1) | USB-powered during all tests — **no battery yet** |
 | Power (Phase 2) | Single-cell lithium battery + voltage-divider monitoring (planned) |
@@ -50,9 +50,9 @@ flowchart LR
 
 ## Results (Phase 1)
 
-**Test setup:** indoor, ~1.5 m node spacing, 15 s sleep interval, ~30 min run, gateway serial logs parsed offline in Python.
+All tests: indoor, ~1.5 m node spacing, 15 s sleep interval, USB-powered.
 
-### Measured
+### Run A — reported in the paper (~30 min)
 
 | Metric | Result | Target | Conditions |
 |---|---|---|---|
@@ -60,6 +60,23 @@ flowchart LR
 | Clock sync accuracy | ±2.6 ms max deviation | ±5 ms | 27 sync cycles |
 | TX power at minimum level | 97.4 % of cycles (266 / 273) at 11.0 dBm | — | 2 power changes during a fade event |
 | TX current @ 11 dBm | ~125 mA | — | USB inline tester |
+
+Raw logs for Run A are not included in this repository.
+
+### Run B — 2026-05-20 (~17 min, raw log included)
+
+Raw gateway log: [`docs/data/2026-05-20_meas_log.txt`](docs/data/2026-05-20_meas_log.txt) · reproduce with `python3 tools/analyze_meas_log.py docs/data/2026-05-20_meas_log.txt`
+
+| Metric | Result | Notes |
+|---|---|---|
+| Packet delivery ratio (overall) | 97.0 % (130 / 134) | cycles 3–69 |
+| — Node 1 | 100 % (67 / 67) | |
+| — Node 2 | 94.0 % (63 / 67) | lost cycles 9, 12, 21, 28 |
+| Cycle period at gateway | 15 270 ms, σ 36 ms | |
+| Cumulative timing drift | none observed — max 65 ms deviation from a linear fit over 67 cycles | |
+| Node 1 → Node 2 arrival offset | 145.5 ms, σ 3.3 ms (139–155 ms, n = 63) | stable phase alignment across deep-sleep cycles |
+
+A simultaneous ~13 dB rise in gateway RSSI for both nodes at cycle 62 indicates an environment/position change, not a TX-power step.
 
 ### Calculated / not measured
 
@@ -76,7 +93,8 @@ On ESP32-C6 (ESP-IDF v5.3.2), ADC readings became invalid when taken after `esp_
 - Self-healing and setup timing verified in logic, not physically fault-injected
 - One pressure-sensor unit gave invalid readings due to a weak I²C pull-up
 - In-network aggregation implemented but not wired into the main loop
-- Python tools in `tools/` still parse an older `DATA:{json}` gateway format; the web dashboard is a UI prototype with sample data
+- Run-to-run variation: PDR was 99.6 % in Run A and 97.0 % in Run B; more repetitions needed
+- Serial listeners in `tools/` still parse an older `DATA:{json}` gateway format
 - FEC reserved but not implemented
 
 ## Roadmap — Phase 2
@@ -101,7 +119,8 @@ node/                   leaf + relay firmware — same binary, NODE_ID selects r
   main/power/           sleep manager, brownout
   main/utils/           RTC-memory state across deep sleep
 gateway/                gateway firmware (serial output, watchdog reboot)
-tools/                  serial listeners + Flask/SocketIO bridge + React dashboard prototype
+tools/                  serial listeners, measurement-log analysis script
+docs/data/              raw measurement logs
 ```
 
 ## Build
@@ -127,7 +146,7 @@ Requires ESP-IDF v5.3.2.
 
 ### Türkçe özet
 
-ESP32-C6 ve ESP-NOW üzerinde, düşük güç tüketimi için tasarlanmış doğrusal çok-atlamalı bir tarım sensör ağı (iki sensör düğümü + ağ geçidi). Düğümler ortak bir zaman çizelgesiyle uyanıyor; veriler aracı düğüm üzerinden ağ geçidine iletiliyor. Faz 1'de (iç mekân, USB beslemeli) %99,6 paket iletim oranı ve ±2,6 ms saat senkronizasyonu ölçüldü. Enerji kazanımları hesaplanmış olup ölçülmemiştir; pil entegrasyonu ve güç ölçümleri Faz 2'nin konusudur.
+ESP32-C6 ve ESP-NOW üzerinde, düşük güç tüketimi için tasarlanmış doğrusal çok-atlamalı bir tarım sensör ağı (iki sensör düğümü + ağ geçidi). Düğümler ortak bir zaman çizelgesiyle uyanıyor; veriler aracı düğüm üzerinden ağ geçidine iletiliyor. Faz 1'de iki iç mekân testinde (USB beslemeli) %99,6 ve %97,0 paket iletim oranı, ±2,6 ms saat senkronizasyonu ölçüldü; 67 döngülük ham logda kümülatif zaman kayması görülmedi. Enerji kazanımları hesaplanmış olup ölçülmemiştir; pil entegrasyonu ve güç ölçümleri Faz 2'nin konusudur.
 
 ## License
 
