@@ -84,7 +84,7 @@ The following are **model-based estimates**, not measurements: per-cycle energy 
 
 ## Engineering note: ADC vs. ESP-NOW init order
 
-On ESP32-C6 (ESP-IDF v5.3.2), ADC readings became invalid when taken after `esp_now_init()`. Reading all ADC channels **before** initializing ESP-NOW resolved it. <!-- TODO: check Espressif docs/issues; keep wording as "observed" unless confirmed undocumented -->
+On ESP32-C6 (ESP-IDF v5.3.2), ADC readings became invalid when taken after `esp_now_init()` (which starts the Wi-Fi/RF stack). Reading all ADC channels **before** initializing ESP-NOW resolved it. This is consistent with the SAR ADC being shared with the Wi-Fi/RF driver — documented by Espressif for ADC2 on the original ESP32 ([ADC oneshot driver](https://docs.espressif.com/projects/esp-idf/en/stable/api-reference/peripherals/adc/adc_oneshot.html)) — but I did not find a C6-specific note, so this is reported as an observed behaviour, not a confirmed root cause.
 
 ## Limitations
 
