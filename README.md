@@ -1,7 +1,5 @@
 # Energy-Efficient Linear Multi-Hop IoT Network (ESP32-C6 / ESP-NOW)
 
-<!-- DRAFT — not public yet. Items marked TODO must be resolved before switching the repo to public. -->
-
 A low-power sensor chain for precision agriculture: leaf and relay nodes deep-sleep most of the time, wake on a shared schedule, and forward readings hop-by-hop over ESP-NOW to an always-on gateway. Built as an individual research project (TED University, CMPE490 – Introduction to Research in Computer Engineering, Spring 2026).
 
 **Status:** Phase 1 (research prototype) completed June 2026 — indoor, USB-powered. Phase 2 (battery operation, power profiling, field tests) planned. *Last updated: 10.2026*
@@ -46,7 +44,7 @@ flowchart LR
 | Power (Phase 2) | Single-cell lithium battery + voltage-divider monitoring (planned) |
 | Gateway link | USB serial, 115200 baud, compact CSV lines (`D:<id>,<soil>,<temp>,...`). Wi-Fi radio runs in STA mode only because ESP-NOW requires it — no Wi-Fi association, no MQTT |
 
-<!-- TODO: add prototype photo → docs/hardware/prototype.jpg -->
+<!-- TODO: add prototype photo → docs/hardware/prototype.jpg and embed here -->
 
 ## Results (Phase 1)
 
@@ -139,8 +137,7 @@ Requires ESP-IDF v5.3.2.
 
 ## Paper
 
-*Energy-Efficient Linear Multi-Hop IoT Network for Precision Agriculture* — S. B. Altay, supervised by Prof. Dr. Gökçe Nur Yılmaz, TED University, 2026.
-<!-- TODO: link after v1.1 corrections + supervisor approval (arXiv or Zenodo) -->
+*Energy-Efficient Linear Multi-Hop IoT Network for Precision Agriculture* — S. B. Altay, supervised by Prof. Dr. Gökçe Nur Yılmaz, TED University, 2026. Course research report (not peer-reviewed); a revised version will be linked here — available on request until then.
 
 ---
 
