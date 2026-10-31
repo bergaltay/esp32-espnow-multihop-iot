@@ -49,6 +49,17 @@ flowchart LR
 </p>
 <p align="center"><em>Phase 1 prototype — two sensor nodes in plant pots, USB-powered, indoor. Gateway not shown.</em></p>
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/hardware/nodes.jpg" alt="Two 3D-printed node enclosures with a capacitive soil moisture probe and a DS18B20 probe each" height="320"></td>
+    <td align="center"><img src="docs/hardware/interior.jpg" alt="Inside a node enclosure: ESP32-C6 Super Mini with hand-soldered wiring" height="320"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Two 3D-printed node enclosures, each with a capacitive soil-moisture probe and a DS18B20 probe</em></td>
+    <td align="center"><em>Inside a node: ESP32-C6 Super Mini, hand-wired (point-to-point, no PCB)</em></td>
+  </tr>
+</table>
+
 ## Results (Phase 1)
 
 All tests: indoor, ~1.5 m node spacing, 15 s sleep interval, USB-powered.
