@@ -44,7 +44,10 @@ flowchart LR
 | Power (Phase 2) | Single-cell lithium battery + voltage-divider monitoring (planned) |
 | Gateway link | USB serial, 115200 baud, compact CSV lines (`D:<id>,<soil>,<temp>,...`). Wi-Fi radio runs in STA mode only because ESP-NOW requires it — no Wi-Fi association, no MQTT |
 
-<!-- TODO: add prototype photo → docs/hardware/prototype.jpg and embed here -->
+<p align="center">
+  <img src="docs/hardware/prototype.jpg" alt="Phase 1 prototype: two sensor nodes in enclosures with soil probes in plant pots, USB-powered" width="420">
+</p>
+<p align="center"><em>Phase 1 prototype — two sensor nodes in plant pots, USB-powered, indoor. Gateway not shown.</em></p>
 
 ## Results (Phase 1)
 
